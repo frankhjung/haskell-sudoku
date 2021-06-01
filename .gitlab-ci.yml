@@ -1,0 +1,24 @@
+---
+
+stages:
+  - build
+
+build:
+  except:
+    - tags
+  image:
+    name: frankhjung/haskell:8.8.4
+    entrypoint: [""]
+  stage: build
+  script:
+    - make setup check build test
+    # mkdir -p public/
+    # cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/scrapbook-0.1.0/doc/html/scrapbook/* public/
+  artifacts:
+    paths:
+      - dist-newstyle/
+      # public
+  cache:
+    key: ${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}
+    paths:
+      - dist-newstyle/
