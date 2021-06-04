@@ -49,8 +49,14 @@ doc:
 
 .PHONY: exec
 exec:	$(SRC)
-	@echo Example ...
-	@cabal exec sudoku
+	@echo Easy Puzzle ...
+	@echo
+	@sed 's/0/-/g' data/easy.puzzle
+	@echo
+	@echo Easy Solution ...
+	@echo
+	@cabal exec sudoku -- data/easy.puzzle +RTS -s
+	@echo
 
 .PHONY: setup
 setup:

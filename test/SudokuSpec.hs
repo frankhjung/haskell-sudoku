@@ -1,6 +1,6 @@
 module SudokuSpec (spec) where
 
-import           Sudoku     (boxs, cols, rows, valid)
+import           Sudoku     (boxs, choices, cols, group, rows, ungroup, valid)
 
 import           Test.Hspec (Spec, describe, it, shouldBe)
 
@@ -16,13 +16,25 @@ spec = do
           ,"287419635"
           ,"345286179"
           ]
-      b = ["123","456","789"]
-      t = ["147","258","369"]
+      b = ["123", "456", "789"]
+      t = ["147", "258", "369"]
 
-  describe "test sudoku functions " $ do
-    it "rows = rows" $ rows m `shouldBe` m
-    it "rows . rows = id" $ (rows . rows) m `shouldBe` m
-    it "cols = transpose" $ cols b `shouldBe` t
-    it "cols . cols = id" $ (cols . cols) m `shouldBe` m
-    it "boxs . boxs = id" $ (boxs . boxs) m `shouldBe` m
-    it "valid matrix" $ valid m `shouldBe` True
+  describe "check properties" $ do
+    it "rows leaves grid unchanged" $
+      rows m `shouldBe` m
+    it "applying rows twice leaves grid unchanged" $
+      (rows . rows) m `shouldBe` m
+    it "cols transposes cols to rows" $
+      cols b `shouldBe` t
+    it "applying cols twice leaves grid unchanged" $
+      (cols . cols) m `shouldBe` m
+    it "applying boxs twice leaves grid unchanged" $
+      (boxs . boxs) m `shouldBe` m
+    it "expect valid matrix" $
+      valid m `shouldBe` True
+    it "applying un/group leaves grid unchanged" $
+      (ungroup . group) m `shouldBe` m
+    it "applying un/group over both rows and columns leaves grid unchanged" $
+      (map ungroup . ungroup . group . map group) m `shouldBe` m
+    it "choices replace unknowns in row" $
+      (concat . choices) ["406"] `shouldBe` ["4","123456789","6"]
