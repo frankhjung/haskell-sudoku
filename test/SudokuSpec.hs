@@ -1,6 +1,7 @@
 module SudokuSpec (spec) where
 
-import           Sudoku     (boxs, choices, cols, group, rows, ungroup, valid)
+import           Sudoku     (boxs, choices, cols, group, rows, singleton,
+                             ungroup, valid)
 
 import           Test.Hspec (Spec, describe, it, shouldBe)
 
@@ -32,6 +33,10 @@ spec = do
       (boxs . boxs) m `shouldBe` m
     it "expect valid matrix" $
       valid m `shouldBe` True
+    it "is a singleton" $
+      singleton "3" `shouldBe` True
+    it "not a singleton" $
+      singleton "34" `shouldBe` False
     it "applying un/group leaves grid unchanged" $
       (ungroup . group) m `shouldBe` m
     it "applying un/group over both rows and columns leaves grid unchanged" $

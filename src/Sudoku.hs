@@ -80,13 +80,8 @@ module Sudoku ( Grid
               , group
               , ungroup
               , choices
-              , expand
+              , singleton
               , valid
-              , expand1
-              , counts
-              , ok
-              , complete
-              , search
               , solve
               ) where
 
@@ -140,9 +135,20 @@ choices = map (map choice)
 -- fix :: Eq a => (a -> a) -> a -> a
 -- fix f x = if x == x' then x else fix f x'
 --           where x' = f x
+--
 -- Sudoku puzzle solver for a easy puzzles.
 -- solve' :: Grid -> [Grid]
 -- solve' = filter valid . expand . fix prune . choices
+--
+-- | Expand a 'Grid' into a list of choice Matrices.
+-- expand :: Matrix [a] -> [Matrix a]
+-- expand m = cp (map cp m)
+--
+-- | Effectively a Cartesian product, which finds all mix permutations of
+-- given row.
+-- cp :: [[a]] -> [[a]]
+-- cp []       = [[]]
+-- cp (xs:xss) = [y:ys | y <- xs, ys <- cp xss]
 
 -- | Prune invalid 'Cell' values from a 'Matrix' of 'Choices'.
 prune :: Matrix Choices -> Matrix Choices
@@ -163,17 +169,7 @@ remove xs ds = if singleton ds then ds else ds \\ xs
 
 -- | Test if value in 'Cell' a single value.
 singleton :: Foldable t => t a -> Bool
-singleton = (1==) . length
-
--- | Expand a 'Grid' into a list of choice Matrices.
-expand :: Matrix [a] -> [Matrix a]
-expand m = cp (map cp m)
-
--- | Effectively a Cartesian product, which finds all mix permutations of
--- given row.
-cp :: [[a]] -> [[a]]
-cp []       = [[]]
-cp (xs:xss) = [y:ys | y <- xs, ys <- cp xss]
+singleton = (==1) . length
 
 -- | Check if 'Grid' is a valid Sudoku.
 valid :: Grid -> Bool
@@ -215,10 +211,6 @@ safe m = all ok (rows m) && all ok (cols m) && all ok (boxs m)
 -- | Returns True if 'Matrix' is complete and 'safe'.
 complete :: Matrix Choices -> Bool
 complete = all (all singleton)
-
--- -- | Test for a singleton list.
--- single :: [a] -> Bool
--- single = (==1) . length
 
 -- | Search for valid solutions given 'Matrix' of 'Choices'.
 search :: Matrix Choices -> [Grid]
