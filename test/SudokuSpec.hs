@@ -1,7 +1,7 @@
 module SudokuSpec (spec) where
 
-import           Sudoku     (boxs, choices, cols, group, rows, singleton,
-                             ungroup, valid)
+import           Sudoku     (Cell, Matrix, boxs, choices, cols, group, nodups,
+                             ok, rows, singleton, ungroup, valid)
 
 import           Test.Hspec (Spec, describe, it, shouldBe)
 
@@ -26,7 +26,7 @@ spec = do
           ,"961537284"
           ,"287419635"
           ,"345286197"
-          ]
+          ] :: Matrix Cell
       b = ["123", "456", "789"]
       t = ["147", "258", "369"]
 
@@ -41,17 +41,25 @@ spec = do
       (cols . cols) m `shouldBe` m
     it "applying boxs twice leaves grid unchanged" $
       (boxs . boxs) m `shouldBe` m
-    it "expect valid matrix" $
-      valid m `shouldBe` True
-    it "expect invalid matrix" $
-      valid x `shouldBe` False
     it "is a singleton" $
       singleton "3" `shouldBe` True
     it "not a singleton" $
       singleton "34" `shouldBe` False
+    it "no duplicates" $
+      nodups ["1","2","3"] `shouldBe` True
+    it "duplicates" $
+      nodups ["1","2","1"] `shouldBe` False
+    it "is ok" $
+      all ok [["1","2","3"]] `shouldBe` True
+    it "not ok" $
+      all ok [["1","2","1"]] `shouldBe` False
     it "applying un/group leaves grid unchanged" $
       (ungroup . group) m `shouldBe` m
     it "applying un/group over both rows and columns leaves grid unchanged" $
       (map ungroup . ungroup . group . map group) m `shouldBe` m
     it "choices replace unknowns in row" $
       (concat . choices) ["406"] `shouldBe` ["4","123456789","6"]
+    it "expect valid matrix" $
+      valid m `shouldBe` True
+    it "expect invalid matrix" $
+      valid x `shouldBe` False

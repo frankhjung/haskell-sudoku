@@ -81,6 +81,8 @@ module Sudoku ( Grid
               , ungroup
               , choices
               , singleton
+              , nodups
+              , ok
               , valid
               , solve
               ) where
