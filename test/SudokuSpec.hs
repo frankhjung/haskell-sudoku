@@ -17,6 +17,16 @@ spec = do
           ,"287419635"
           ,"345286179"
           ]
+      x = ["534678912"
+          ,"672195348"
+          ,"198342567"
+          ,"859761423"
+          ,"426853791"
+          ,"713924856"
+          ,"961537284"
+          ,"287419635"
+          ,"345286197"
+          ]
       b = ["123", "456", "789"]
       t = ["147", "258", "369"]
 
@@ -33,6 +43,8 @@ spec = do
       (boxs . boxs) m `shouldBe` m
     it "expect valid matrix" $
       valid m `shouldBe` True
+    it "expect invalid matrix" $
+      valid x `shouldBe` False
     it "is a singleton" $
       singleton "3" `shouldBe` True
     it "not a singleton" $
