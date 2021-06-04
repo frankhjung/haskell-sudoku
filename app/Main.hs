@@ -9,8 +9,8 @@ Run example Sudoku solver agains puzzle read from a file:
 module Main (main) where
 
 import           Sudoku             (Grid, solve)
-import qualified System.Environment as Env (getArgs)
-import qualified System.Exit        as Sys (exitFailure)
+import           System.Environment (getArgs)
+import           System.Exit        (exitFailure)
 
 -- True if path to puzzle file provided.
 hasPuzzle :: [String] -> Bool
@@ -25,12 +25,11 @@ usage = putStrLn $
 -- Solve Sudoku puzzle provided by a file.
 main :: IO ()
 main = do
-  args <- Env.getArgs
+  args <- getArgs
   if hasPuzzle args
     then do
       ms <- readFile (head args :: FilePath)
       mapM_ putStrLn $ (head . solve) (lines ms :: Grid)
-    else do
-      usage
-      Sys.exitFailure
+    else
+      usage >> exitFailure
 

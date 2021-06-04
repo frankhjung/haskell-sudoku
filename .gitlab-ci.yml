@@ -14,7 +14,7 @@ build:
   script:
     - make clean setup check build test doc
     - mkdir -p public/
-    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/sudoku-0.?.?/doc/html/sudoku/* public/
+    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/sudoku-?.?.?/doc/html/sudoku/* public/
     - make exec
   artifacts:
     paths:

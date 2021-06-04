@@ -1,7 +1,7 @@
 module SudokuSpec (spec) where
 
 import           Sudoku     (Cell, Matrix, boxs, choices, cols, group, nodups,
-                             ok, rows, singleton, ungroup, valid)
+                             ok, rows, singleton, ungroup)
 
 import           Test.Hspec (Spec, describe, it, shouldBe)
 
@@ -59,7 +59,3 @@ spec = do
       (map ungroup . ungroup . group . map group) m `shouldBe` m
     it "choices replace unknowns in row" $
       (concat . choices) ["406"] `shouldBe` ["4","123456789","6"]
-    it "expect valid matrix" $
-      valid m `shouldBe` True
-    it "expect invalid matrix" $
-      valid x `shouldBe` False

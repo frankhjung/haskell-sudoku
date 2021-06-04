@@ -9,7 +9,7 @@ default:check build test
 check:	tags style lint
 
 .PHONY: all
-all:	check build test doc bench exec
+all:	check build test doc exec
 
 .PHONY: tags
 tags:	$(SRC)
@@ -36,11 +36,6 @@ build:
 test:
 	@echo test ...
 	@cabal test --test-show-details=always
-
-.PHONY: bench
-bench:
-	@echo bench ...
-	@cabal bench
 
 .PHONY: doc
 doc:

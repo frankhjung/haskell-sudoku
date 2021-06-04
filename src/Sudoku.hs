@@ -10,23 +10,42 @@ License     : GPL-3
 This is an implementation of Richard Bird's Sudoku Solver from
 <https://dl.acm.org/doi/book/10.5555/1951654 Pearls of Functional Algorithm Design>.
 
-== Properties
+= Method
 
-=== Rows
+This solver essentially works at the row level. In order to work with columns
+and 3 x 3 internal boxes of the grid as rows, then they first need to be
+transformed into rows. Then they need to be restored. This is possible due
+to the properties (see "Sudoku#properties") that these transformations have.
 
-@rows ∘ rows = id@
+The work done on each row (columns and boxes) is:
+
+  * fill unknown cells with all 'choices' of available 'digits'
+  * remove fixed digits from these cell choices
+  * find the first cell with a minimum (more than 1) choices
+  * expand that single cell into matching choice matrices
+  * recurse into each expanded 'Matrix', searching for next minium cell to prune & expand,
+  * stop when either an invalid 'Matrix' or a solution 'Matrix' containing only 'singleton' cells is found.
+
+= Properties #properties#
+
+The following properties apply to 'rows', 'cols', 'boxs', 'group' and
+'ungroup':
+
+== Rows
+
+prop> rows ∘ rows = id
 
 That is:
 
-@rows (rows a) = a@
+prop> rows (rows a) = a
 
-=== Columns
+== Columns
 
-@cols ∘ cols = id@
+prop> cols ∘ cols = id
 
 That is:
 
-   @cols (cols a) = a@
+prop> cols (cols a) = a
 
 Where cols transposes columns to rows:
 
@@ -36,15 +55,15 @@ cols |1 2 3|   |1 4 7|
      |7 8 9|   |3 6 9|
 @
 
-=== Boxes
+== Boxes
 
-@boxs ∘ boxs = id@
+prop> boxs ∘ boxs = id
 
 That is:
 
-@boxs (boxs a) = a@
+prop> boxs (boxs a) = a
 
-Example:
+=== Example
 
 @
 cols | 1  2  3  4|   |  1  2 |  5  6 |
@@ -53,11 +72,11 @@ cols | 1  2  3  4|   |  1  2 |  5  6 |
      |13 14 15 17|   |_11_12_|_15_17_|
 @
 
-=== Group
+== Group
 
-@ungroup ∘ group = id@
+prop> ungroup ∘ group = id
 
-== References
+= References
 
   * <https://dl.acm.org/doi/book/10.5555/1951654 Pearls of Functional Algorithm Design>
   * <https://en.wikipedia.org/wiki/Sudoku Wikipedia Sudoku>
@@ -73,37 +92,84 @@ module Sudoku ( Grid
               , Cell
               , Choices
               , digits
-              , unknown
+              , solve
+              , search
+              , choices
+              , safe
+              , complete
+              , expand1
+              , ok
+              , counts
               , rows
               , cols
               , boxs
               , group
               , ungroup
-              , choices
+              , unknown
               , singleton
               , nodups
-              , ok
-              , valid
-              , solve
               ) where
 
 import           Data.List (transpose, (\\))
 
+-- | Representation of a Sudoku puzzle.
 type Grid = Matrix Cell
+-- | Generalised matrix is a list of rows.
 type Matrix a = [Row a]
+-- | Generalised row is a list of elements.
 type Row a = [a]
+-- | A cell is single character.
 type Cell = Char
+-- | Choices is a list of 'Cell's.
 type Choices = [Cell]
 
 -- | Restriction of 'Cell' values in a 'Matrix'.
 digits :: String
 digits = ['1'..'9']
 
--- | Cell that contain @'0'@ are unknown.
--- Incomplete Sudoku grids use the @'0'@ value to indicate
--- an unknown value.
-unknown :: Char -> Bool
-unknown = (=='0')
+-- | Sudoku puzzle solver.
+solve :: Grid -> [Grid]
+solve = search . choices
+
+-- | Search for valid solutions given 'Matrix' of 'Choices'.
+search :: Matrix Choices -> [Grid]
+search m
+  | not (safe m) = []
+  | complete m'  = [map (map head) m']
+  | otherwise    = concatMap search (expand1 m')
+  where m' = prune m
+
+-- | This returns 'unknown' cells filled in with all 'digits'.
+choices :: Grid -> Matrix Choices
+choices = map (map choice)
+          where choice v = if unknown v then digits else [v]
+
+-- | A 'Matrix' is safe if there are no duplicates in any of
+-- 'rows', 'cols' or 'boxs'.
+safe :: Eq a => [Matrix a] -> Bool
+safe m = all ok (rows m) && all ok (cols m) && all ok (boxs m)
+
+-- | A 'Matrix' is complete if it only contains singleton cells.
+complete :: Matrix Choices -> Bool
+complete = all (all singleton)
+
+-- | Expand the smallest (see 'counts') single cell of 'Matrix'
+-- of 'Choices'.
+expand1 :: Matrix Choices -> [Matrix Choices]
+expand1 mc = [rows1 ++ [row1 ++ [c]:row2] ++ rows2 | c <- cs]
+  where
+    (rows1, row:rows2) = break (any smallest) mc
+    (row1, cs:row2)    = break smallest row
+    smallest           = (==n) . length
+    n                  = minimum (counts mc)
+
+-- | A 'Matrix' is OK if it contains no duplicates in any cell.
+ok :: Eq a => [Row a] -> Bool
+ok cells = nodups [d | [d] <- cells]
+
+-- | Get the lengths of choice cells in a 'Matrix' of 'Choices'.
+counts :: Matrix Choices -> [Int]
+counts = filter (/=1) . map length . concat
 
 -- | Retreive rows (as rows).
 rows :: Matrix a -> [Row a]
@@ -122,35 +188,16 @@ group :: [a] -> [[a]]
 group [] = []
 group xs = take 3 xs : group (drop 3 xs)
 
--- | Ungroup boxes back to cells.
+-- | Ungroup boxes restores grouped boxes.
 ungroup :: [[a]] -> [a]
 ungroup = concat
 
--- | This returns 'unkown' cells filled in with
--- all 'digit' values.
-choices :: Grid -> Matrix Choices
-choices = map (map choice)
-          where choice v = if unknown v then digits else [v]
-
--- | Repeat function until value remains unchanged.
--- Used by easy Sudo solver.
--- fix :: Eq a => (a -> a) -> a -> a
--- fix f x = if x == x' then x else fix f x'
---           where x' = f x
+-- | Cell that contain @'0'@ are 'unknown'.
 --
--- Sudoku puzzle solver for a easy puzzles.
--- solve' :: Grid -> [Grid]
--- solve' = filter valid . expand . fix prune . choices
---
--- | Expand a 'Grid' into a list of choice Matrices.
--- expand :: Matrix [a] -> [Matrix a]
--- expand m = cp (map cp m)
---
--- | Effectively a Cartesian product, which finds all mix permutations of
--- given row.
--- cp :: [[a]] -> [[a]]
--- cp []       = [[]]
--- cp (xs:xss) = [y:ys | y <- xs, ys <- cp xss]
+-- Incomplete Sudoku grids use the @'0'@ value to indicate
+-- an 'unknown' value. Valid cell values are 'digits'.
+unknown :: Char -> Bool
+unknown = (=='0')
 
 -- | Prune invalid 'Cell' values from a 'Matrix' of 'Choices'.
 prune :: Matrix Choices -> Matrix Choices
@@ -160,12 +207,12 @@ prune = pruneBy boxs . pruneBy cols . pruneBy rows
 pruneBy :: ([[Choices]] -> [[Choices]]) -> [[Choices]] -> [[Choices]]
 pruneBy f = f . map pruneRow . f
 
--- | Prune fixed 'digits' from cell choices.
+-- | Prune fixed 'digits' from 'Cell' 'choices'.
 pruneRow :: [Choices] -> [Choices]
 pruneRow row = map (remove fixed) row
                where fixed = [d | [d] <- row]
 
--- | Remove fixed digits from cell of choices.
+-- | Remove fixed digits from 'Cell' of 'choices'.
 remove :: Choices -> Choices -> Choices
 remove xs ds = if singleton ds then ds else ds \\ xs
 
@@ -173,56 +220,9 @@ remove xs ds = if singleton ds then ds else ds \\ xs
 singleton :: Foldable t => t a -> Bool
 singleton = (==1) . length
 
--- | Check if 'Grid' is a valid Sudoku.
-valid :: Grid -> Bool
-valid g = all nodups (rows g) &&
-          all nodups (cols g) &&
-          all nodups (boxs g)
-
--- | Remove duplicates from a cell.
+-- | Remove duplicates from a choice 'Cell's.
+--
+-- Duplicates in 'Choices' are 'digits' from /fixed/ or 'singleton' cells.
 nodups :: Eq a => [a] -> Bool
 nodups []     = True
 nodups (x:xs) = notElem x xs && nodups xs
-
--- | Expand the smallest single cell of 'Matrix' of 'Choices'.
-expand1 :: Matrix Choices -> [Matrix Choices]
-expand1 mc = [rows1 ++ [row1 ++ [c]:row2] ++ rows2 | c <- cs]
-  where
-    (rows1, row:rows2) = break (any smallest) mc
-    (row1, cs:row2)    = break smallest row
-    smallest           = (==n) . length
-    n                  = minimum (counts mc)
-
--- | Break a row in two based on predicate on where to break list.
--- break :: (a -> Bool) -> [a] -> (a, a)
--- break1 p xs = (takeWhile (not p) xs, dropWhile (not p) xs)
--- break = break
-
--- | Get the lengths of 'Choices' in a 'Matrix' of 'Choices'.
-counts :: Matrix Choices -> [Int]
-counts = filter (/=1) . map length . concat
-
--- | A 'row' is OK if it contains no duplicates.
-ok :: Eq a => [Row a] -> Bool
-ok row = nodups [d | [d] <- row]
-
--- | Matrix is safe if there are no duplicates in 'rows', 'cols' or 'boxs'.
-safe :: Eq a => [Matrix a] -> Bool
-safe m = all ok (rows m) && all ok (cols m) && all ok (boxs m)
-
--- | Returns True if 'Matrix' is complete and 'safe'.
-complete :: Matrix Choices -> Bool
-complete = all (all singleton)
-
--- | Search for valid solutions given 'Matrix' of 'Choices'.
-search :: Matrix Choices -> [Grid]
-search m
-  | not (safe m) = []
-  | complete m'  = [map (map head) m']
-  | otherwise    = concatMap search (expand1 m')
-  where m' = prune m
-
--- | Sudoku puzzle solver.
-solve :: Grid -> [Grid]
-solve = search . choices
-
