@@ -1,5 +1,9 @@
 # Revision history for sudoku
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 0.2.0 -- 2021-06-04
 
-* First version. Released on an unsuspecting world.
+* solve hard Sudoku puzzles (more efficient)
+
+## 0.1.0 -- 2021-06-03
+
+* solve easy Sudoku puzzles

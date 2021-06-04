@@ -1,10 +1,8 @@
 {-| Sudoku solver main function.
 
- == Example Sudoku puzzle:
+Run example Sudoku solver agains puzzle read from a file:
 
- @
- cat data/easy.puzzle | runhaskell app/Main.hs
- @
+  cabal exec sudoku -- data/easy.sudoku
 
  -}
 

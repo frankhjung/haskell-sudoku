@@ -1,7 +1,7 @@
 cabal-version:       >=1.10
 
 name:                 sudoku
-version:              0.1.0
+version:              0.2.0
 synopsis:             simple sudoku solver by Richard Bird
 description:          A simple sudoku solver from Richard Bird.
 license:              GPL-3

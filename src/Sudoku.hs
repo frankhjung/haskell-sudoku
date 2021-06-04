@@ -86,7 +86,6 @@ module Sudoku ( Grid
               , counts
               , ok
               , complete
-              , single
               , search
               , solve
               ) where
@@ -99,11 +98,13 @@ type Row a = [a]
 type Cell = Char
 type Choices = [Cell]
 
--- | Restriction on 'Cell' data in 'Matrix':
+-- | Restriction of 'Cell' values in a 'Matrix'.
 digits :: String
 digits = ['1'..'9']
 
 -- | Cell that contain @'0'@ are unknown.
+-- Incomplete Sudoku grids use the @'0'@ value to indicate
+-- an unknown value.
 unknown :: Char -> Bool
 unknown = (=='0')
 
@@ -115,7 +116,7 @@ rows = id
 cols :: Matrix a -> [Row a]
 cols = transpose
 
--- | Retrieve sudoku boxes from grid as rows.
+-- | Retrieve Sudoku boxes from the grid as rows.
 boxs :: Matrix a -> [Row a]
 boxs = map ungroup . ungroup . map cols . group . map group
 
@@ -128,19 +129,22 @@ group xs = take 3 xs : group (drop 3 xs)
 ungroup :: [[a]] -> [a]
 ungroup = concat
 
--- | Choices returns blanks cells filled with
--- all legal values, though they may not be valid.
--- Here 'Cells' with an entry of @'0'@ are unknown.
+-- | This returns 'unkown' cells filled in with
+-- all 'digit' values.
 choices :: Grid -> Matrix Choices
 choices = map (map choice)
           where choice v = if unknown v then digits else [v]
 
 -- | Repeat function until value remains unchanged.
+-- Used by easy Sudo solver.
 -- fix :: Eq a => (a -> a) -> a -> a
 -- fix f x = if x == x' then x else fix f x'
 --           where x' = f x
+-- Sudoku puzzle solver for a easy puzzles.
+-- solve' :: Grid -> [Grid]
+-- solve' = filter valid . expand . fix prune . choices
 
--- | Prune invalid cell values from list.
+-- | Prune invalid 'Cell' values from a 'Matrix' of 'Choices'.
 prune :: Matrix Choices -> Matrix Choices
 prune = pruneBy boxs . pruneBy cols . pruneBy rows
 
@@ -148,7 +152,7 @@ prune = pruneBy boxs . pruneBy cols . pruneBy rows
 pruneBy :: ([[Choices]] -> [[Choices]]) -> [[Choices]] -> [[Choices]]
 pruneBy f = f . map pruneRow . f
 
--- | Prune fixed digits from cell choices.
+-- | Prune fixed 'digits' from cell choices.
 pruneRow :: [Choices] -> [Choices]
 pruneRow row = map (remove fixed) row
                where fixed = [d | [d] <- row]
@@ -157,33 +161,30 @@ pruneRow row = map (remove fixed) row
 remove :: Choices -> Choices -> Choices
 remove xs ds = if singleton ds then ds else ds \\ xs
 
--- | Is value in cell a single digit?
+-- | Test if value in 'Cell' a single value.
 singleton :: Foldable t => t a -> Bool
-singleton = (1 ==) . length
+singleton = (1==) . length
 
--- | Expand choices to list of matrices.
+-- | Expand a 'Grid' into a list of choice Matrices.
 expand :: Matrix [a] -> [Matrix a]
 expand m = cp (map cp m)
 
--- | Cartesian product.
+-- | Effectively a Cartesian product, which finds all mix permutations of
+-- given row.
 cp :: [[a]] -> [[a]]
 cp []       = [[]]
 cp (xs:xss) = [y:ys | y <- xs, ys <- cp xss]
 
--- | Validate if grid is a valid Sudoku.
+-- | Check if 'Grid' is a valid Sudoku.
 valid :: Grid -> Bool
 valid g = all nodups (rows g) &&
           all nodups (cols g) &&
           all nodups (boxs g)
 
--- | Remove duplicates from cell.
+-- | Remove duplicates from a cell.
 nodups :: Eq a => [a] -> Bool
 nodups []     = True
 nodups (x:xs) = notElem x xs && nodups xs
-
--- Sudoku puzzle solver for a easy puzzles.
--- solve' :: Grid -> [Grid]
--- solve' = filter valid . expand . fix prune . choices
 
 -- | Expand the smallest single cell of 'Matrix' of 'Choices'.
 expand1 :: Matrix Choices -> [Matrix Choices]
@@ -199,11 +200,11 @@ expand1 mc = [rows1 ++ [row1 ++ [c]:row2] ++ rows2 | c <- cs]
 -- break1 p xs = (takeWhile (not p) xs, dropWhile (not p) xs)
 -- break = break
 
--- | Get the length of 'Choices' in a 'Matrix' of 'Choices'.
+-- | Get the lengths of 'Choices' in a 'Matrix' of 'Choices'.
 counts :: Matrix Choices -> [Int]
 counts = filter (/=1) . map length . concat
 
--- | Row is Ok if it contains no duplicates.
+-- | A 'row' is OK if it contains no duplicates.
 ok :: Eq a => [Row a] -> Bool
 ok row = nodups [d | [d] <- row]
 
@@ -211,13 +212,13 @@ ok row = nodups [d | [d] <- row]
 safe :: Eq a => [Matrix a] -> Bool
 safe m = all ok (rows m) && all ok (cols m) && all ok (boxs m)
 
--- | Test it 'Matrix' is complete and safe.
+-- | Returns True if 'Matrix' is complete and 'safe'.
 complete :: Matrix Choices -> Bool
-complete = all (all single)
---
+complete = all (all singleton)
+
 -- -- | Test for a singleton list.
-single :: [a] -> Bool
-single = (==1) . length
+-- single :: [a] -> Bool
+-- single = (==1) . length
 
 -- | Search for valid solutions given 'Matrix' of 'Choices'.
 search :: Matrix Choices -> [Grid]
@@ -227,7 +228,7 @@ search m
   | otherwise    = concatMap search (expand1 m')
   where m' = prune m
 
--- | Sudokup puzzle solver.
+-- | Sudoku puzzle solver.
 solve :: Grid -> [Grid]
 solve = search . choices
 
