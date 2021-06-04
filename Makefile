@@ -51,11 +51,35 @@ doc:
 exec:	$(SRC)
 	@echo Easy Puzzle ...
 	@echo
-	@sed 's/0/-/g' data/easy.puzzle
+	@sed 's/0/-/g' data/easy.sudoku
 	@echo
 	@echo Easy Solution ...
 	@echo
-	@cabal exec sudoku -- data/easy.puzzle +RTS -s
+	@cabal exec sudoku -- data/easy.sudoku +RTS -s
+	@echo
+	@echo Medium Puzzle ...
+	@echo
+	@sed 's/0/-/g' data/medium.sudoku
+	@echo
+	@echo Medium Solution ...
+	@echo
+	@cabal exec sudoku -- data/medium.sudoku +RTS -s
+	@echo
+	@echo Hard Puzzle ...
+	@echo
+	@sed 's/0/-/g' data/hard.sudoku
+	@echo
+	@echo Hard Solution ...
+	@echo
+	@cabal exec sudoku -- data/hard.sudoku +RTS -s
+	@echo
+	@echo Expert Puzzle ...
+	@echo
+	@sed 's/0/-/g' data/expert.sudoku
+	@echo
+	@echo Expert Solution ...
+	@echo
+	@cabal exec sudoku -- data/expert.sudoku +RTS -s
 	@echo
 
 .PHONY: setup

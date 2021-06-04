@@ -2,6 +2,7 @@
 
 stages:
   - build
+  - deploy
 
 build:
   except:
@@ -11,14 +12,28 @@ build:
     entrypoint: [""]
   stage: build
   script:
-    - make setup check build test
-    # mkdir -p public/
-    # cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/scrapbook-0.1.0/doc/html/scrapbook/* public/
+    - make setup check build test doc
+    - mkdir -p public/
+    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/sudoku-0.1.0/doc/html/sudoku/* public/
   artifacts:
     paths:
       - dist-newstyle/
-      # public
+      - public
   cache:
     key: ${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}
     paths:
       - dist-newstyle/
+
+pages:
+  only:
+    refs:
+      - master
+  image: alpine:latest
+  stage: deploy
+  script:
+    - echo Publishing pages ...
+  dependencies:
+    - build
+  artifacts:
+    paths:
+      - public

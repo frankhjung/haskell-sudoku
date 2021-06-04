@@ -74,7 +74,6 @@ module Sudoku ( Grid
               , Choices
               , digits
               , unknown
-              , solve
               , rows
               , cols
               , boxs
@@ -83,6 +82,13 @@ module Sudoku ( Grid
               , choices
               , expand
               , valid
+              , expand1
+              , counts
+              , ok
+              , complete
+              , single
+              , search
+              , solve
               ) where
 
 import           Data.List (transpose, (\\))
@@ -100,10 +106,6 @@ digits = ['1'..'9']
 -- | Cell that contain @'0'@ are unknown.
 unknown :: Char -> Bool
 unknown = (=='0')
-
--- | Solve Sudokup puzzle for a given 'Grid'.
-solve :: Grid -> [Grid]
-solve = filter valid . expand . fix prune . choices
 
 -- | Retreive rows (as rows).
 rows :: Matrix a -> [Row a]
@@ -134,9 +136,9 @@ choices = map (map choice)
           where choice v = if unknown v then digits else [v]
 
 -- | Repeat function until value remains unchanged.
-fix :: Eq a => (a -> a) -> a -> a
-fix f x = if x == x' then x else fix f x'
-          where x' = f x
+-- fix :: Eq a => (a -> a) -> a -> a
+-- fix f x = if x == x' then x else fix f x'
+--           where x' = f x
 
 -- | Prune invalid cell values from list.
 prune :: Matrix Choices -> Matrix Choices
@@ -178,3 +180,54 @@ valid g = all nodups (rows g) &&
 nodups :: Eq a => [a] -> Bool
 nodups []     = True
 nodups (x:xs) = notElem x xs && nodups xs
+
+-- Sudoku puzzle solver for a easy puzzles.
+-- solve' :: Grid -> [Grid]
+-- solve' = filter valid . expand . fix prune . choices
+
+-- | Expand the smallest single cell of 'Matrix' of 'Choices'.
+expand1 :: Matrix Choices -> [Matrix Choices]
+expand1 mc = [rows1 ++ [row1 ++ [c]:row2] ++ rows2 | c <- cs]
+  where
+    (rows1, row:rows2) = break (any smallest) mc
+    (row1, cs:row2)    = break smallest row
+    smallest           = (==n) . length
+    n                  = minimum (counts mc)
+
+-- | Break a row in two based on predicate on where to break list.
+-- break :: (a -> Bool) -> [a] -> (a, a)
+-- break1 p xs = (takeWhile (not p) xs, dropWhile (not p) xs)
+-- break = break
+
+-- | Get the length of 'Choices' in a 'Matrix' of 'Choices'.
+counts :: Matrix Choices -> [Int]
+counts = filter (/=1) . map length . concat
+
+-- | Row is Ok if it contains no duplicates.
+ok :: Eq a => [Row a] -> Bool
+ok row = nodups [d | [d] <- row]
+
+-- | Matrix is safe if there are no duplicates in 'rows', 'cols' or 'boxs'.
+safe :: Eq a => [Matrix a] -> Bool
+safe m = all ok (rows m) && all ok (cols m) && all ok (boxs m)
+
+-- | Test it 'Matrix' is complete and safe.
+complete :: Matrix Choices -> Bool
+complete = all (all single)
+--
+-- -- | Test for a singleton list.
+single :: [a] -> Bool
+single = (==1) . length
+
+-- | Search for valid solutions given 'Matrix' of 'Choices'.
+search :: Matrix Choices -> [Grid]
+search m
+  | not (safe m) = []
+  | complete m'  = [map (map head) m']
+  | otherwise    = concatMap search (expand1 m')
+  where m' = prune m
+
+-- | Sudokup puzzle solver.
+solve :: Grid -> [Grid]
+solve = search . choices
+

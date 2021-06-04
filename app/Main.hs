@@ -14,9 +14,9 @@ import           Sudoku             (Grid, solve)
 import qualified System.Environment as Env (getArgs)
 import qualified System.Exit        as Sys (exitFailure)
 
--- Valid if path to puzzle file provided.
-isValid :: [String] -> Bool
-isValid args = length args == 1
+-- True if path to puzzle file provided.
+hasPuzzle :: [String] -> Bool
+hasPuzzle args = length args == 1
 
 -- Usage with current program name and command arguments.
 usage :: IO ()
@@ -28,10 +28,11 @@ usage = putStrLn $
 main :: IO ()
 main = do
   args <- Env.getArgs
-  if isValid args
+  if hasPuzzle args
     then do
       ms <- readFile (head args :: FilePath)
       mapM_ putStrLn $ (head . solve) (lines ms :: Grid)
     else do
       usage
       Sys.exitFailure
+
