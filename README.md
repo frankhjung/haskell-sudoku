@@ -26,35 +26,11 @@ cabal exec sudoku -- data/easy.sudoku
 
 This is an easy Sudoku puzzle:
 
-```text
--5-|-1-|427
-9--|-5-|68-
-4--|68-|91-
----+---+---
-37-|-62|---
-8--|4--|--2
--29|53-|76-
----+---+---
-29-|--5|--1
--8-|-2-|-49
----|8-1|--6
-```
+![Easy Puzzle](data/easy-puzzle.png)
 
 With a solution of
 
-```text
-658|913|427
-917|254|683
-432|687|915
----+---+---
-374|162|598
-865|479|132
-129|538|764
----+---+---
-296|345|871
-581|726|349
-743|891|256
-```
+![Easy Solution](data/easy-solution.png)
 
 ## References
 
