@@ -8,13 +8,13 @@ build:
   except:
     - tags
   image:
-    name: frankhjung/haskell:8.8.4
+    name: frankhjung/haskell:9.0.2
     entrypoint: [""]
   stage: build
   script:
     - make clean setup check build test doc
     - mkdir -p public/
-    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-8.8.4/sudoku-?.?.?/doc/html/sudoku/* public/
+    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-9.0.2/sudoku-?.?.?/doc/html/sudoku/* public/
     - make exec
   artifacts:
     paths:
