@@ -50,7 +50,7 @@ API documentation is available from GitLab pages,
 Run example Sudoku solver against puzzle read from a file:
 
 ```bash
-cabal exec sudoku -- data/easy.sudoku
+stack exec sudoku -- data/easy.sudoku
 ```
 
 This is an easy Sudoku puzzle:

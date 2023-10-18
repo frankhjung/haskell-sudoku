@@ -4,34 +4,35 @@ stages:
   - build
   - deploy
 
+variables:
+  RTSOPTS: "+RTS -N1 -s"
+  STACK_ROOT: ${CI_PROJECT_DIR}/.stack-work
+
 build:
+  stage: build
   except:
     - tags
   image:
-    name: frankhjung/haskell:9.0.2
+    name: frankhjung/haskell:9.4.7
     entrypoint: [""]
-  stage: build
   script:
-    - make clean setup check build test doc
-    - mkdir -p public/
-    - cp -r ${CI_PROJECT_DIR}/dist-newstyle/build/x86_64-linux/ghc-9.0.2/sudoku-?.?.?/doc/html/sudoku/* public/
-    - make exec
+    - make clean check build test doc exec
+    - mv $(stack path --local-doc-root)/ public/
   artifacts:
     paths:
       - public
   cache:
-    key: ${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}
+    key: ${CI_COMMIT_REF_NAME}
     paths:
-      - dist-newstyle/
+      - ${STACK_ROOT}
 
 pages:
-  only:
-    refs:
-      - master
-  image: alpine:latest
   stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  image: alpine:latest
   script:
-    - echo Publishing pages ...
+    - echo Publishing documentation ...
   dependencies:
     - build
   artifacts:
