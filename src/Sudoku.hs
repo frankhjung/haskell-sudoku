@@ -138,7 +138,8 @@ search m
   | not (safe m) = []
   | complete m'  = [map (map head) m']
   | otherwise    = concatMap search (expand1 m')
-  where m' = prune m
+  where
+    m' = prune m
 
 -- | This returns 'unknown' cells filled in with all 'digits'.
 choices :: Grid -> Matrix Choices
