@@ -50,9 +50,9 @@ spec = do
     it "duplicates" $
       nodups ["1","2","1"] `shouldBe` False
     it "is ok" $
-      all ok [["1","2","3"]] `shouldBe` True
+      ok ["1","2","3"] `shouldBe` True
     it "not ok" $
-      all ok [["1","2","1"]] `shouldBe` False
+      ok ["1","2","1"] `shouldBe` False
     it "applying un/group leaves grid unchanged" $
       (ungroup . group) m `shouldBe` m
     it "applying un/group over both rows and columns leaves grid unchanged" $
