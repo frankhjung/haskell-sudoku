@@ -2,7 +2,7 @@
 {-|
 Sudoku solver main function.
 
-Run example Sudoku solver agains puzzle read from a file:
+Run example Sudoku solver against puzzle read from a file:
 
   stack exec sudoku -- data/easy.sudoku
  -}

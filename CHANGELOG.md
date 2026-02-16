@@ -1,5 +1,11 @@
 # Revision history for sudoku
 
+## 0.4.0 -- 2026-02-16
+
+* update to ghc-9.6.7, lts-22.44
+* Refactored GitHub Actions workflow (consolidated jobs, improved caching, fixed tool versions)
+* Updated README for clarity, conciseness, and Australian English conventions
+
 ## 0.3.0 -- 2023-10-18
 
 * update to ghc-9.4.7, lts-21.14

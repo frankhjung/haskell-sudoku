@@ -13,8 +13,8 @@ all:	format check build test doc exec
 
 .PHONY: format
 format:
+	@stylish-haskell --inplace $(SRC)
 	@cabal-fmt --inplace sudoku.cabal
-	@stylish-haskell --config=.stylish-haskell.yaml --inplace $(SRC)
 
 .PHONY: check
 check:	tags lint
@@ -30,7 +30,7 @@ lint:
 
 .PHONY: build
 build:
-	@stack build
+	@stack build --pedantic
 
 .PHONY: test
 test:

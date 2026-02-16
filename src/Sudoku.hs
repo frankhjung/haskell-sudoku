@@ -3,7 +3,7 @@
 
 Module      : Sudoku
 Description : Simple Sudoku solver by Richard Bird
-Copyright   : © Frank Jung, 2021
+Copyright   : © Frank Jung, 2021-2026
 License     : GPL-3
 
 = Introduction
@@ -13,19 +13,20 @@ This is an implementation of Richard Bird's Sudoku Solver from
 
 = Method
 
-This solver essentially works at the row level. In order to work with columns
-and 3 x 3 internal boxes of the grid as rows, then they first need to be
-transformed into rows. Then they need to be restored. This is possible due
-to the properties (see "Sudoku#properties") that these transformations have.
+The solver operates primarily at the row level. To process columns and 3×3
+internal boxes, the algorithm transforms them into rows, processes them, and
+then restores the original structure. This approach relies on the reversible
+nature of these transformations (see "Sudoku#properties").
 
-The work done on each row (columns and boxes) is:
+The algorithm performs the following steps on each row (including transformed
+columns and boxes):
 
   * fill unknown cells with all 'choices' of available 'digits'
   * remove fixed digits from these cell choices
-  * find the first cell with a minimum (more than 1) choices
+  * find the first cell with the minimum number of choices (greater than one)
   * expand that single cell into matching choice matrices
-  * recurse into each expanded 'Matrix', searching for next minium cell to prune & expand,
-  * stop when either an invalid 'Matrix' or a solution 'Matrix' containing only 'singleton' cells is found.
+  * recursively search each expanded 'Matrix' for the next minimum cell to prune and expand
+  * terminate when it finds either an invalid 'Matrix' or a solution 'Matrix' containing only 'singleton' cells
 
 = Properties #properties#
 
@@ -173,11 +174,11 @@ ok cells = nodups [d | [d] <- cells]
 counts :: Matrix Choices -> [Int]
 counts = filter (/=1) . map length . concat
 
--- | Retreive rows (as rows).
+-- | Retrieve rows (as rows).
 rows :: Matrix a -> [Row a]
 rows = id
 
--- | Retreive columns as rows.
+-- | Retrieve columns as rows.
 cols :: Matrix a -> [Row a]
 cols = transpose
 
@@ -194,7 +195,7 @@ group xs = take 3 xs : group (drop 3 xs)
 ungroup :: [[a]] -> [a]
 ungroup = concat
 
--- | Cell that contain @'0'@ are 'unknown'.
+-- | Cells that contain @'0'@ are 'unknown'.
 --
 -- Incomplete Sudoku grids use the @'0'@ value to indicate
 -- an 'unknown' value. Valid cell values are 'digits'.
@@ -205,7 +206,7 @@ unknown = (=='0')
 prune :: Matrix Choices -> Matrix Choices
 prune = pruneBy boxs . pruneBy cols . pruneBy rows
 
--- | Reduce choices by pruning redundent cell values.
+-- | Reduce choices by pruning redundant cell values.
 pruneBy :: ([[Choices]] -> [[Choices]]) -> [[Choices]] -> [[Choices]]
 pruneBy f = f . map pruneRow . f
 
@@ -218,7 +219,7 @@ pruneRow row = map (remove fixed) row
 remove :: Choices -> Choices -> Choices
 remove xs ds = if singleton ds then ds else ds \\ xs
 
--- | Test if value in 'Cell' a single value.
+-- | Test if the value in a 'Cell' is a single value.
 singleton :: Foldable t => t a -> Bool
 singleton = (==1) . length
 

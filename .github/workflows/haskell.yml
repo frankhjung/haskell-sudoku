@@ -1,0 +1,117 @@
+---
+name: haskell sudoku
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.6'
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Cache ~/.stack
+        uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml', 'sudoku.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+
+      - name: Cache .stack-work
+        uses: actions/cache@v4
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml', 'sudoku.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - name: Update Hackage index
+        run: cabal update
+
+      - name: Cabal Check
+        run: cabal check
+
+      - name: Build
+        run: stack build --pedantic --fast --ghc-options='-Wwarn' --test --no-run-tests
+
+      - name: Test
+        run: stack test
+
+      - name: Execute Sudoku
+        run: |
+          stack exec sudoku -- data/easy.sudoku
+          stack exec sudoku -- data/medium.sudoku
+          stack exec sudoku -- data/hard.sudoku
+          stack exec sudoku -- data/expert.sudoku
+
+  publish-docs:
+    name: Publish Docs
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.6'
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Restore Cache ~/.stack
+        uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml', 'sudoku.cabal') }}
+
+      - name: Restore Cache .stack-work
+        uses: actions/cache@v4
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml', 'sudoku.cabal') }}
+
+      - name: Build Documentation
+        run: |
+          stack haddock
+          mkdir -p public
+          cp -r "$(stack path --local-doc-root)"/* public/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
